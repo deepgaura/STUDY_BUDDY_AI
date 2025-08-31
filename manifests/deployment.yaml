@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: llmops-app
-        image: deep2107/studybuddy:v70
+        image: deep2107/studybuddy:v71
         ports:
         - containerPort: 8501
         env:
