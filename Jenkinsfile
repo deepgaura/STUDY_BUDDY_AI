@@ -3,17 +3,15 @@ pipeline {
 
   options {
     timestamps()
-    ansiColor('xterm')
     skipDefaultCheckout(true)
   }
 
   environment {
-    // --- change these IDs only if your Jenkins credentials use different names ---
     DOCKER_HUB_REPO           = 'deep2107/studybuddy'
-    DOCKER_HUB_CREDENTIALS_ID = 'dockerhub-token'   // Docker Hub username/password/token
-    GITHUB_CREDENTIALS_ID     = 'github-token'      // GitHub username/password (or PAT as password)
-    IMAGE_TAG                 = "v${BUILD_NUMBER}"  // e.g., v23
-    ARGOCD_HOST_PORT          = '34.67.42.132:31704'// your exposed Argo CD server
+    DOCKER_HUB_CREDENTIALS_ID = 'dockerhub-token'
+    GITHUB_CREDENTIALS_ID     = 'github-token'
+    IMAGE_TAG                 = "v${BUILD_NUMBER}"
+    ARGOCD_HOST_PORT          = '34.67.42.132:31704'
   }
 
   stages {
@@ -51,7 +49,6 @@ pipeline {
       steps {
         sh """
           set -e
-          # Replace the entire image line regardless of previous tag/digest
           sed -i -E "s|^(\\s*image:\\s*).+|\\1${DOCKER_HUB_REPO}:${IMAGE_TAG}|" manifests/deployment.yaml
           echo 'Updated image line:' && grep -n 'image:' manifests/deployment.yaml
         """
@@ -72,7 +69,7 @@ pipeline {
               git config user.email "dipmahjn@gmail.com"
               git add manifests/deployment.yaml
               git commit -m "Update image to ${DOCKER_HUB_REPO}:${IMAGE_TAG}" || echo "No changes to commit"
-              git push https://${GIT_USER}:${GIT_PASS}@github.com/deepgaura/STUDY_BUDDY_AI.git HEAD:main
+              git push https://\$GIT_USER:\$GIT_PASS@github.com/deepgaura/STUDY_BUDDY_AI.git HEAD:main
             """
           }
         }
@@ -96,7 +93,6 @@ pipeline {
 
     stage('Apply via kubectl & Sync Argo CD') {
       steps {
-        // You uploaded this as a Secret file with ID "kubeconfig"
         withCredentials([file(credentialsId: 'kubeconfig', variable: 'KCFG')]) {
           sh """
             set -e
